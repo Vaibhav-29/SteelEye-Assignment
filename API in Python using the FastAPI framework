@@ -1,0 +1,79 @@
+import datetime as dt
+from typing import List, Optional
+from fastapi import FastAPI, Query
+
+app = FastAPI()
+
+
+trades_db = [
+    {
+        "tradeId": "1",
+        "assetClass": "Equity",
+        "counterparty": "ABC Bank",
+        "instrumentId": "TSLA",
+        "instrumentName": "Tesla",
+        "tradeDateTime": dt.datetime(2023, 5, 1, 10, 30),
+        "tradeDetails": {
+            "buySellIndicator": "BUY",
+            "price": 100.0,
+            "quantity": 10,
+        },
+        "trader": "John Doe",
+    },
+    
+]
+
+class TradeDetails(BaseModel):
+    buySellIndicator: str
+    price: float
+    quantity: int
+
+class Trade(BaseModel):
+    assetClass: Optional[str]
+    counterparty: Optional[str]
+    instrumentId: str
+    instrumentName: str
+    tradeDateTime: dt.datetime
+    tradeDetails: TradeDetails
+    tradeId: Optional[str]
+    trader: str
+
+@app.get("/trades", response_model=List[Trade])
+def get_trades(
+    assetClass: Optional[str] = Query(None, description="Asset class of the trade."),
+    end: Optional[dt.datetime] = Query(None, description="The maximum date for the tradeDateTime field."),
+    maxPrice: Optional[float] = Query(None, description="The maximum value for the tradeDetails.price field."),
+    minPrice: Optional[float] = Query(None, description="The minimum value for the tradeDetails.price field."),
+    start: Optional[dt.datetime] = Query(None, description="The minimum date for the tradeDateTime field."),
+    tradeType: Optional[str] = Query(None, description="The tradeDetails.buySellIndicator is a BUY or SELL"),
+    search: Optional[str] = Query(None, description="Search text for counterparty, instrumentId, instrumentName, trader."),
+) -> List[Trade]:
+    filtered_trades = trades_db
+
+    # Apply filtering
+    if assetClass:
+        filtered_trades = [trade for trade in filtered_trades if trade.get("assetClass") == assetClass]
+    if end:
+        filtered_trades = [trade for trade in filtered_trades if trade.get("tradeDateTime") <= end]
+    if maxPrice is not None:
+        filtered_trades = [trade for trade in filtered_trades if trade.get("tradeDetails", {}).get("price") <= maxPrice]
+    if minPrice is not None:
+        filtered_trades = [trade for trade in filtered_trades if trade.get("tradeDetails", {}).get("price") >= minPrice]
+    if start:
+        filtered_trades = [trade for trade in filtered_trades if trade.get("tradeDateTime") >= start]
+    if tradeType:
+        filtered_trades = [trade for trade in filtered_trades if trade.get("tradeDetails", {}).get("buySellIndicator") == tradeType]
+
+    
+    if search:
+        search_text = search.lower()
+        filtered_trades = [
+            trade
+            for trade in filtered_trades
+            if search_text in str(trade.get("counterparty", "")).lower()
+            or search_text in str(trade.get("instrumentId", "")).lower()
+            or search_text in str(trade.get("instrumentName", "")).lower()
+            or search_text in str(trade.get("trader", "")).lower()
+        ]
+
+    return
