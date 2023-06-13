@@ -1,0 +1,9 @@
+Reasoning behind the Approach
+
+FastAPI: FastAPI is chosen as the framework for implementing the API due to its high performance, easy-to-use interface, and support for asynchronous operations. It allows us to build efficient and scalable APIs with minimal boilerplate code.
+
+Data Model: The Trade and TradeDetails models are defined using Pydantic. Pydantic provides a simple and intuitive way to define data models with field validation and documentation support.
+
+Mock Database: Since setting up an Elasticsearch instance is outside the scope of the submission, a mock database layer is implemented. The trades_db list serves as a placeholder for the database and is used to simulate data retrieval and filtering operations.
+
+Listing Trades: The /trades endpoint fetches all trades from the database. 
